@@ -1,0 +1,428 @@
+.company-container {
+    width: 100%;
+    min-height: 100vh;
+    padding: 32px 40px;
+    background: #F8F9FA;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    font-family: 'Inter', sans-serif;
+    box-sizing: border-box;
+}
+
+/* Navigation Bar */
+.nav-bar {
+    display: flex;
+    align-items: center;
+}
+
+.back-home-btn {
+    background: white;
+    border: 1px solid #E8EAED;
+    border-radius: 8px;
+    color: #6B7280;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    transition: all 0.2s ease;
+    box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.back-home-btn:hover {
+    color: #1A1A1A;
+    background-color: #ffffff;
+    border-color: #D1D5DB;
+    transform: translateY(-1px);
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.arrow-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+/* Header */
+.company-header {
+    padding: 32px;
+    background: white;
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.10);
+    border-radius: 12px;
+    border: 1px solid #E8EAED;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.company-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.company-name {
+    font-size: 32px;
+    font-weight: 800;
+    color: #1A1A1A;
+    letter-spacing: -0.5px;
+}
+
+.company-ticker {
+    font-size: 15px;
+    font-weight: 600;
+    color: #9CA3AF;
+    background: #F3F4F6;
+    padding: 4px 10px;
+    border-radius: 6px;
+    align-self: flex-start;
+}
+
+.company-shares {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6B7280;
+    background: #F3F4F6;
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+
+.price-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.current-price {
+    font-size: 42px;
+    font-weight: 800;
+    color: #1A1A1A;
+    letter-spacing: -1px;
+}
+
+.price-change-box {
+    padding: 8px 16px;
+    border-radius: 8px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-weight: 700;
+}
+
+.price-change-box.up {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10B981;
+}
+
+.price-change-box.down {
+    background: rgba(239, 68, 68, 0.12);
+    color: #EF4444;
+}
+
+/* Content Grid */
+.content-grid {
+    display: flex;
+    gap: 28px;
+}
+
+.left-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.right-sidebar {
+    width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+/* Chart Panel */
+.chart-panel {
+    padding: 28px;
+    background: white;
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.10);
+    border-radius: 12px;
+    border: 1px solid #E8EAED;
+    min-height: 500px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.panel-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1A1A1A;
+}
+
+.chart-container {
+    flex: 1;
+    width: 100%;
+    min-height: 350px;
+    background: #FAFAFA;
+    border-radius: 10px;
+    border: 1px solid #F3F4F6;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Insights Panel */
+.insights-panel {
+    padding: 28px;
+    background: white;
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.10);
+    border-radius: 12px;
+    border: 1px solid #E8EAED;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.insights-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.risk-section {
+    padding: 24px;
+    background: linear-gradient(135deg, #1F2937 0%, #111827 100%);
+    border-radius: 12px;
+    outline: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.risk-header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.risk-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #9CA3AF;
+    letter-spacing: 0.5px;
+}
+
+.risk-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background: rgba(239, 68, 68, 0.2);
+    border-radius: 6px;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #EF4444;
+    font-size: 12px;
+    font-weight: 800;
+    width: fit-content;
+}
+
+.risk-value {
+    font-size: 32px;
+    font-weight: 800;
+    color: #F87171;
+}
+
+.insight-item {
+    padding: 20px;
+    background: #FAFAFA;
+    border-radius: 10px;
+    border: 1px solid #E8EAED;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.insight-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #6B7280;
+    text-transform: uppercase;
+}
+
+.insight-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1A1A1A;
+}
+
+.insight-desc {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #4B5563;
+}
+
+.volatility-bar {
+    width: 100px;
+    height: 6px;
+    background: linear-gradient(90deg, #10B981 0%, #F59E0B 50%, #EF4444 100%);
+    border-radius: 3px;
+    margin-top: 6px;
+}
+
+/* Action Panel */
+.action-panel {
+    padding: 28px;
+    background: white;
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.10);
+    border-radius: 12px;
+    border: 1px solid #E8EAED;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    position: sticky;
+    top: 28px;
+}
+
+.my-cash-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #F3F4F6;
+}
+
+.asset-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cash-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1A1A1A;
+}
+
+.share-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #10B981;
+}
+
+.quantity-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.quantity-input-wrapper {
+    height: 52px;
+    padding: 0 16px;
+    background: #FAFAFA;
+    border-radius: 10px;
+    border: 1px solid #E5E7EB;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: border-color 0.2s;
+}
+
+.quantity-input-wrapper:hover,
+.quantity-input-wrapper:focus-within {
+    border-color: #FF9000;
+}
+
+.quantity-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1A1A1A;
+    outline: none;
+    -moz-appearance: textfield; 
+}
+
+.quantity-input::-webkit-outer-spin-button,
+.quantity-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.quantity-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.qty-btn {
+    width: 32px;
+    height: 32px;
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 600;
+    color: #4B5563;
+    transition: all 0.1s;
+}
+
+.qty-btn:hover {
+    background: #F3F4F6;
+    color: #1A1A1A;
+}
+
+.qty-btn:active {
+    transform: scale(0.95);
+}
+
+.total-section {
+    padding: 20px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #F8F9FA;
+    border: 1px solid #E8EAED;
+}
+
+.total-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6B7280;
+}
+
+.total-value {
+    font-size: 20px;
+    font-weight: 800;
+    color: #FF9000;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.trade-btn {
+    flex: 1;
+    height: 50px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.05);
+    transition: transform 0.1s, opacity 0.2s;
+}
+
+.trade-btn:hover { opacity: 0.9; }
+.trade-btn:active { transform: scale(0.98); }
+.trade-btn.buy { background: linear-gradient(135deg, #10B981 0%, #059669 100%); }
+.trade-btn.sell { background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); }
