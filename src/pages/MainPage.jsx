@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { WebSocketContext } from '../components/WebSocketProvider';
@@ -6,7 +6,8 @@ import './MainPage.css';
 
 const MainPage = () => {
     const navigate = useNavigate();
-    const { stockData: wsStockData } = useContext(WebSocketContext) || { stockData: [] };
+    const wsContext = useContext(WebSocketContext);
+    const wsStockData = wsContext ? wsContext.stockData : [];
 
     const [portfolio, setPortfolio] = useState([]);
     const [userName, setUserName] = useState("User"); 
@@ -16,43 +17,58 @@ const MainPage = () => {
     const [rankings, setRankings] = useState([]);
     const [sectorThemes, setSectorThemes] = useState([]);
     const [marketStatus, setMarketStatus] = useState("OPEN");
-    const [token] = useState(localStorage.getItem('accessToken'));
+    
+    const [token] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('accessToken');
+        }
+        return null;
+    });
 
     const getTrendInfo = (rate) => {
-        if (rate > 0) return { className: 'up', arrow: '↑', sign: '+' };
-        if (rate < 0) return { className: 'down', arrow: '↓', sign: '' }; 
+        const safeRate = Number(rate) || 0;
+        if (safeRate > 0) return { className: 'up', arrow: '↑', sign: '+' };
+        if (safeRate < 0) return { className: 'down', arrow: '↓', sign: '' }; 
         return { className: 'same', arrow: '-', sign: '' };
     };
 
     const handleCompanyClick = (stock) => {
+        const currentPrice = stock.currentPrice || 0;
+        const changeRate = stock.changeRate || 0;
+        
         navigate(`/company/${stock.companyName}`, {
             state: {
-                currentPrice: stock.currentPrice,
-                changeRate: stock.changeRate,
-                changeValue: stock.currentPrice - (stock.currentPrice / (1 + stock.changeRate/100)),
+                currentPrice: currentPrice,
+                changeRate: changeRate,
+                changeValue: currentPrice - (currentPrice / (1 + changeRate/100)),
                 userMoney: userMoney 
             }
         });
     };
 
-    const fetchPortfolio = async () => {
+    const fetchPortfolio = useCallback(async () => {
         if (!token) return;
         try {
             const res = await axios.get('http://localhost:8080/user-positions/portfolio', {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            const responseData = res.data?.results; 
+
+            const responseData = res.data?.results || res.data?.data; 
+
             if (responseData) {
                 setPortfolio(responseData.positions || []);
-                if (responseData.user) {
-                    setUserName(responseData.user.username || "User");
-                    setUserMoney(responseData.user.money || 0);
+                const userData = responseData.user || responseData;
+                if (userData) {
+                    setUserName(userData.username || userData.name || userData.nickname || "User");
+                    setUserMoney(userData.money ?? userData.cash ?? userData.balance ?? 0);
                 }
             }
-        } catch (err) { console.error(err); }
-    };
+        } catch (err) {
+            console.error("포트폴리오 조회 실패:", err);
+        }
+    }, [token]);
 
-    const fetchRankings = async () => {
+    const fetchRankings = useCallback(async () => {
         if (!token) return;
         try {
             const res = await axios.get('http://localhost:8080/user-positions/ranking', {
@@ -62,9 +78,9 @@ const MainPage = () => {
             const filteredData = rawData.filter(ranker => ranker.totalAssets > 0);
             setRankings(filteredData);
         } catch (err) { setRankings([]); }
-    };
+    }, [token]);
 
-    const fetchSectorThemes = async () => {
+    const fetchSectorThemes = useCallback(async () => {
         if (!token) return;
         try {
             const res = await axios.get('http://localhost:8080/sector-themes/info', {
@@ -72,9 +88,9 @@ const MainPage = () => {
             });
             setSectorThemes(res.data?.data ?? []);
         } catch (err) { console.error(err); }
-    };
+    }, [token]);
 
-    const fetchStockData = async () => {
+    const fetchStockData = useCallback(async () => {
         if (!token) return;
         try {
             const res = await axios.get('http://localhost:8080/companies/info', {
@@ -82,23 +98,36 @@ const MainPage = () => {
             });
             setStockData(res.data?.results ?? []);
         } catch (err) { console.error(err); }
-    };
+    }, [token]);
 
     useEffect(() => {
         fetchPortfolio();
         fetchStockData();
         fetchRankings();
         fetchSectorThemes();
-    }, [token]);
+    }, [fetchPortfolio, fetchStockData, fetchRankings, fetchSectorThemes]);
+
 
     useEffect(() => {
-        if (wsStockData && wsStockData.length > 0) {
-            setStockData(wsStockData);
-            fetchSectorThemes();
-        }
+        if (!wsStockData || wsStockData.length === 0) return;
+
+        setStockData(prevList => {
+            if (prevList.length === 0) return wsStockData;
+
+            const newDataMap = new Map(wsStockData.map(item => [item.companyName, item]));
+
+            return prevList.map(existingItem => {
+                const newItem = newDataMap.get(existingItem.companyName);
+                
+                if (newItem) {
+                    return { ...existingItem, ...newItem };
+                }
+                return existingItem;
+            });
+        });
     }, [wsStockData]);
 
-    const totalStockValue = portfolio.reduce((acc, item) => acc + (item.currentPrice * item.quantity), 0);
+    const totalStockValue = portfolio.reduce((acc, item) => acc + ((item.currentPrice || 0) * (item.quantity || 0)), 0);
     const totalAssetValue = totalStockValue + userMoney;
 
     return (
@@ -108,12 +137,17 @@ const MainPage = () => {
                     <span className="logo-text">Stockity</span>
                     <div className={`market-status-container ${marketStatus === "OPEN" ? 'open' : ''}`}>
                         <div className={`status-pulse ${marketStatus === "OPEN" ? 'open' : ''}`} />
-                        <span className={`status-label ${marketStatus === "OPEN" ? 'open' : ''}`}>{marketStatus === "OPEN" ? "Market Open" : "Market Closed"}</span>
+                        <span className={`status-label ${marketStatus === "OPEN" ? 'open' : ''}`}>
+                            {marketStatus === "OPEN" ? "Market Open" : "Market Closed"}
+                        </span>
                     </div>
                 </div>
                 <div className="user-wrapper">
-                    <div className="user-info-text"><span className="user-name-text">{userName} 님</span></div>
-                    <button className="logout-button" onClick={() => { localStorage.removeItem('accessToken'); window.location.href = '/login'; }}>Logout</button>
+                    <span className="user-name-text">{userName} 님</span>
+                    <button className="logout-button" onClick={() => { 
+                        localStorage.removeItem('accessToken'); 
+                        window.location.href = '/login'; 
+                    }}>Logout</button>
                 </div>
             </div>
 
@@ -127,7 +161,7 @@ const MainPage = () => {
                             <div className="sector-card" key={idx}>
                                 <span className="sector-name">{theme.themeName || theme.sector}</span>
                                 <span className={`sector-change ${className}`}>
-                                    {sign}{sectorRate.toFixed(2)}%
+                                    {sign}{Number(sectorRate).toFixed(2)}%
                                 </span>
                                 {theme.leadingStock && <span className="sector-leader">Leading: {theme.leadingStock}</span>}
                             </div>
@@ -138,21 +172,39 @@ const MainPage = () => {
 
             <div className="dashboard-grid">
                 <div className="left-column">
-
                     <div className="panel-base">
-                        <div className="panel-top"><span className="panel-heading">Live Market</span><div className="live-badge"><div className="live-pulse" /><span className="live-label">LIVE</span></div></div>
+                        <div className="panel-top">
+                            <span className="panel-heading">Live Market</span>
+                            <div className="live-badge">
+                                <div className="live-pulse" />
+                                <span className="live-label">LIVE</span>
+                            </div>
+                        </div>
                         <div className="table-list">
-                            <div className="table-head"><div className="head-cell">COMPANY</div><div className="head-cell">PRICE</div><div className="head-cell">CHANGE</div><div className="head-cell center">TREND</div></div>
+                            <div className="table-head">
+                                <div className="head-cell">COMPANY</div>
+                                <div className="head-cell">PRICE</div>
+                                <div className="head-cell">CHANGE</div>
+                                <div className="head-cell center">TREND</div>
+                            </div>
                             {stockData.map((stock) => {
-                                const { className, arrow, sign } = getTrendInfo(stock.changeRate);
+                                const currentPrice = stock.currentPrice || 0;
+                                const changeRate = stock.changeRate || 0;
+                                const { className, arrow, sign } = getTrendInfo(changeRate);
                                 
                                 return (
                                     <div className="data-row" key={stock.companyName} onClick={() => handleCompanyClick(stock)}>
-                                        <div className="cell"><span className="company-title">{stock.companyName}</span><span className="company-ticker">{stock.sector}</span></div>
-                                        <div className="cell"><span className="price-text">{stock.currentPrice.toLocaleString()}원</span></div>
+                                        <div className="cell">
+                                            <span className="company-title">{stock.companyName}</span>
+                                            <span className="company-ticker">{stock.sector}</span>
+                                        </div>
+                                        <div className="cell">
+                                            {/* toLocaleString() 안전하게 호출 */}
+                                            <span className="price-text">{Number(currentPrice).toLocaleString()}원</span>
+                                        </div>
                                         <div className="cell">
                                             <span className={`change-text ${className}`}>
-                                                {sign}{stock.changeRate.toFixed(2)}%
+                                                {sign}{Number(changeRate).toFixed(2)}%
                                             </span>
                                         </div>
                                         <div className="cell center">
@@ -165,29 +217,43 @@ const MainPage = () => {
                     </div>
 
                     <div className="panel-base">
-                        <div className="panel-top"><span className="panel-heading">My Portfolio</span><button className="refresh-btn" onClick={fetchPortfolio}>↻ 갱신</button></div>
+                        <div className="panel-top">
+                            <span className="panel-heading">My Portfolio</span>
+                            <button className="refresh-btn" onClick={fetchPortfolio}>↻ 갱신</button>
+                        </div>
                         <div className="stats-row">
-                            <div className="stat-box"><span className="stat-title">TOTAL ASSET</span><span className="stat-number">{totalAssetValue.toLocaleString()}원</span></div>
-                            <div className="stat-box"><span className="stat-title">CASH</span><span className="stat-number">{userMoney.toLocaleString()}원</span></div>
-                            <div className="stat-box"><span className="stat-title">STOCK VALUE</span><span className="stat-number">{totalStockValue.toLocaleString()}원</span></div>
+                            <div className="stat-box">
+                                <span className="stat-title">TOTAL ASSET</span>
+                                <span className="stat-number">{Number(totalAssetValue).toLocaleString()}원</span>
+                            </div>
+                            <div className="stat-box">
+                                <span className="stat-title">CASH</span>
+                                <span className="stat-number">{Number(userMoney).toLocaleString()}원</span>
+                            </div>
+                            <div className="stat-box">
+                                <span className="stat-title">STOCK VALUE</span>
+                                <span className="stat-number">{Number(totalStockValue).toLocaleString()}원</span>
+                            </div>
                         </div>
                         <div className="table-list compact">
                             <div className="table-head"><div className="head-cell">STOCK</div><div className="head-cell">QTY</div><div className="head-cell">AVG</div><div className="head-cell">CUR</div><div className="head-cell right">P&L</div></div>
                             {portfolio.map((item, idx) => {
-                                const profit = (item.currentPrice - item.averagePrice) * item.quantity; 
+                                const currentP = item.currentPrice || 0;
+                                const avgP = item.averagePrice || 0;
+                                const profit = (currentP - avgP) * (item.quantity || 0);
                                 const profitClass = profit > 0 ? 'up' : (profit < 0 ? 'down' : 'same');
                                 const profitSign = profit > 0 ? '+' : '';
 
                                 return (
                                     <div className="data-row no-border" key={idx} 
-                                         onClick={() => handleCompanyClick({companyName: item.name || item.companyName, currentPrice: item.currentPrice, changeRate: 0})}>
+                                         onClick={() => handleCompanyClick({companyName: item.name || item.companyName, currentPrice: currentP, changeRate: 0})}>
                                         <div className="cell"><span className="company-title">{item.name || item.companyName}</span></div>
                                         <div className="cell"><span className="price-text">{item.quantity}</span></div>
-                                        <div className="cell"><span className="company-ticker">{item.averagePrice.toLocaleString()}</span></div>
-                                        <div className="cell"><span className="price-text">{item.currentPrice.toLocaleString()}</span></div>
+                                        <div className="cell"><span className="company-ticker">{Number(avgP).toLocaleString()}</span></div>
+                                        <div className="cell"><span className="price-text">{Number(currentP).toLocaleString()}</span></div>
                                         <div className="cell right">
                                             <span className={`change-text ${profitClass}`} style={{fontSize:'12px'}}>
-                                                {profitSign}{profit.toLocaleString()}
+                                                {profitSign}{Number(profit).toLocaleString()}
                                             </span>
                                         </div>
                                     </div>
@@ -206,7 +272,7 @@ const MainPage = () => {
                                     <div style={{flex:1, display:'flex', flexDirection:'column', gap:'5px'}}>
                                         <span className="company-title">{ranker.username}</span>
                                         <span className="company-ticker">
-                                            {ranker.totalAssets ? ranker.totalAssets.toLocaleString() : 0}원
+                                            {ranker.totalAssets ? Number(ranker.totalAssets).toLocaleString() : 0}원
                                         </span>
                                     </div>
                                 </div>
